@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -17,6 +17,7 @@ async function run() {
     try {
         await client.connect();
         const userCollection = client.db("Mr-Computer-Tools").collection("users");
+        const toolCollection = client.db("Mr-Computer-Tools").collection("tools");
 
         // update or insert verify user in the database
         app.put("/user/:email", async (req, res) => {
@@ -49,10 +50,23 @@ async function run() {
         app.get("/user/:email", async (req, res) => {
             const email = req.params.email;
             const query = { email };
-            console.log(query)
             const user = await userCollection.findOne(query);
             res.send(user);
         });
+
+        // get all tools
+        app.get('/tools', async (req, res) => {
+            const tools = await toolCollection.find().toArray();
+            res.send(tools);
+        });
+
+        // get single tool by id
+        app.get('/tools/:id', async (req, res) => {
+            const toolId = req.params.id;
+            const query = { _id: ObjectId(toolId) };
+            const result = await toolCollection.findOne(query);
+            res.send(result);
+        })
 
     } finally {
 
