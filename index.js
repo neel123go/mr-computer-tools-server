@@ -66,7 +66,7 @@ async function run() {
             const query = { _id: ObjectId(toolId) };
             const result = await toolCollection.findOne(query);
             res.send(result);
-        })
+        });
 
     } finally {
 
