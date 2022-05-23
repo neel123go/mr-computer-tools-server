@@ -18,6 +18,7 @@ async function run() {
         await client.connect();
         const userCollection = client.db("Mr-Computer-Tools").collection("users");
         const toolCollection = client.db("Mr-Computer-Tools").collection("tools");
+        const orderCollection = client.db("Mr-Computer-Tools").collection("orders");
 
         // update or insert verify user in the database
         app.put("/user/:email", async (req, res) => {
@@ -65,6 +66,12 @@ async function run() {
             const toolId = req.params.id;
             const query = { _id: ObjectId(toolId) };
             const result = await toolCollection.findOne(query);
+            res.send(result);
+        });
+
+        app.post('/order', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
             res.send(result);
         });
 
