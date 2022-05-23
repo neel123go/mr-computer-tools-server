@@ -7,12 +7,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 function verifyJwt(req, res, next) {
-    const authHeader = req.headers.authorization;
+    const authHeader = req?.headers?.authorization;
     if (!authHeader) {
         return res.status(401).send({ message: 'Unauthorized Access' });
     }
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
         if (err) {
             return res.status(403).send({ message: 'Forbidden Access' });
         }
@@ -50,7 +50,7 @@ async function run() {
         });
 
         // Update user name in the database
-        app.put("/userName/:email", async (req, res) => {
+        app.put("/userName/:email", verifyJwt, async (req, res) => {
             const email = req.params.email;
             const userName = req.body;
             const filter = { email };
@@ -77,7 +77,7 @@ async function run() {
         });
 
         // get single tool by id
-        app.get('/tools/:id', async (req, res) => {
+        app.get('/tools/:id', verifyJwt, async (req, res) => {
             const toolId = req.params.id;
             const query = { _id: ObjectId(toolId) };
             const result = await toolCollection.findOne(query);
@@ -85,11 +85,18 @@ async function run() {
         });
 
         // insert user order in the database
-        app.post('/order', async (req, res) => {
+        app.post('/order', verifyJwt, async (req, res) => {
             const order = req.body;
             const result = await orderCollection.insertOne(order);
             res.send(result);
         });
+
+        // get user order by email
+        app.get('/order/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const order = await orderCollection.find({ email: email }).toArray();
+            res.send(order);
+        })
 
     } finally {
 
