@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -45,12 +45,12 @@ async function run() {
                 $set: user,
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '20d' });
             res.send({ result, token });
         });
 
         // Update user name in the database
-        app.put("/userName/:email", verifyJwt, async (req, res) => {
+        app.put("/userName/:email", async (req, res) => {
             const email = req.params.email;
             const userName = req.body;
             const filter = { email };
@@ -77,7 +77,7 @@ async function run() {
         });
 
         // get single tool by id
-        app.get('/tools/:id', verifyJwt, async (req, res) => {
+        app.get('/tools/:id', async (req, res) => {
             const toolId = req.params.id;
             const query = { _id: ObjectId(toolId) };
             const result = await toolCollection.findOne(query);
@@ -96,6 +96,14 @@ async function run() {
             const email = req.params.email;
             const order = await orderCollection.find({ email: email }).toArray();
             res.send(order);
+        });
+
+        // cancel user order by id
+        app.delete('/order/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await orderCollection.deleteOne(query);
+            res.send(result);
         })
 
     } finally {
