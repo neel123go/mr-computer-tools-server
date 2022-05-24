@@ -50,6 +50,12 @@ async function run() {
             res.send({ result, token });
         });
 
+        // get all users
+        app.get('/users', verifyJwt, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        })
+
         // Update user name in the database
         app.put("/userName/:email", async (req, res) => {
             const email = req.params.email;
