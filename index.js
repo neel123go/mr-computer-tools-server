@@ -34,6 +34,7 @@ async function run() {
         const userCollection = client.db("Mr-Computer-Tools").collection("users");
         const toolCollection = client.db("Mr-Computer-Tools").collection("tools");
         const orderCollection = client.db("Mr-Computer-Tools").collection("orders");
+        const reviewCollection = client.db("Mr-Computer-Tools").collection("reviews");
 
         // update or insert verify user in the database
         app.put("/user/:email", async (req, res) => {
@@ -104,7 +105,14 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
             res.send(result);
-        })
+        });
+
+        // insert user review
+        app.post('/review', verifyJwt, async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        });
 
     } finally {
 
