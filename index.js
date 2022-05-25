@@ -67,6 +67,13 @@ async function run() {
             }
         });
 
+        app.get('/admin/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+        })
+
         // get all users
         app.get('/user', verifyJwt, async (req, res) => {
             const users = await userCollection.find().toArray();
@@ -92,6 +99,13 @@ async function run() {
             const query = { email };
             const user = await userCollection.findOne(query);
             res.send(user);
+        });
+
+        // insert tools
+        app.post('/tools', async (req, res) => {
+            const tool = req.body;
+            const result = await toolCollection.insertOne(tool);
+            res.send(result);
         });
 
         // get all tools
@@ -141,7 +155,7 @@ async function run() {
         app.get('/review', async (req, res) => {
             const reviews = await reviewCollection.find().toArray();
             res.send(reviews);
-        })
+        });
 
     } finally {
 
