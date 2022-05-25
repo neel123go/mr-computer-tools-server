@@ -36,6 +36,17 @@ async function run() {
         const orderCollection = client.db("Mr-Computer-Tools").collection("orders");
         const reviewCollection = client.db("Mr-Computer-Tools").collection("reviews");
 
+        // Verify Admin
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            } else {
+                res.status(403).send({ message: 'Forbidden Access' });
+            }
+        }
+
         // update or insert verify user in the database
         app.put("/user/:email", async (req, res) => {
             const email = req.params.email;
@@ -51,20 +62,14 @@ async function run() {
         });
 
         // make user admin
-        app.put("/user/admin/:email", verifyJwt, async (req, res) => {
+        app.put("/user/admin/:email", verifyJwt, verifyAdmin, async (req, res) => {
             const email = req.params.email;
-            const requester = req.decoded.email;
-            const requesterAccount = await userCollection.findOne({ email: requester });
-            if (requesterAccount.role === 'admin') {
-                const filter = { email: email };
-                const updateDoc = {
-                    $set: { role: 'admin' },
-                };
-                const user = await userCollection.updateOne(filter, updateDoc);
-                res.send(user);
-            } else {
-                res.status(403).send({ message: 'Forbidden Access' });
-            }
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const user = await userCollection.updateOne(filter, updateDoc);
+            res.send(user);
         });
 
         app.get('/admin/:email', verifyJwt, async (req, res) => {
@@ -102,7 +107,7 @@ async function run() {
         });
 
         // insert tools
-        app.post('/tools', async (req, res) => {
+        app.post('/tools', verifyJwt, verifyAdmin, async (req, res) => {
             const tool = req.body;
             const result = await toolCollection.insertOne(tool);
             res.send(result);
@@ -129,10 +134,19 @@ async function run() {
             res.send(result);
         });
 
+        // get user order by id
+        app.get('/orders/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const order = await orderCollection.findOne(query);
+            res.send(order);
+        });
+
         // get user order by email
         app.get('/order/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
             const order = await orderCollection.find({ email: email }).toArray();
+            // console.log(order);
             res.send(order);
         });
 
