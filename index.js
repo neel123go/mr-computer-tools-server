@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -46,6 +47,19 @@ async function run() {
                 res.status(403).send({ message: 'Forbidden Access' });
             }
         }
+
+        // api for payment
+        app.post('/create-payment-intent', verifyJwt, async (req, res) => {
+            const treatment = req.body;
+            const price = treatment.totalPrice;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret });
+        });
 
         // update or insert verify user in the database
         app.put("/user/:email", async (req, res) => {
@@ -146,7 +160,6 @@ async function run() {
         app.get('/order/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
             const order = await orderCollection.find({ email: email }).toArray();
-            // console.log(order);
             res.send(order);
         });
 
@@ -156,6 +169,22 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
             res.send(result);
+        });
+
+        // update order information
+        app.patch('/order/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    status: 'pending',
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedOrder);
         });
 
         // insert user review
