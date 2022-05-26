@@ -171,6 +171,12 @@ async function run() {
             res.send(result);
         });
 
+        // get all users orders
+        app.get('/orders', verifyJwt, verifyAdmin, async (req, res) => {
+            const orders = await orderCollection.find().toArray();
+            res.send(orders);
+        });
+
         // update order information
         app.patch('/order/:id', verifyJwt, async (req, res) => {
             const id = req.params.id;
