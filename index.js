@@ -141,6 +141,14 @@ async function run() {
             res.send(result);
         });
 
+        // delete tools by id
+        app.delete('/tools/:id', verifyJwt, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await toolCollection.deleteOne(query);
+            res.send(result);
+        });
+
         // insert user order in the database
         app.post('/order', verifyJwt, async (req, res) => {
             const order = req.body;
@@ -185,7 +193,7 @@ async function run() {
             const updatedDoc = {
                 $set: {
                     paid: true,
-                    status: 'pending',
+                    status: payment.status,
                     transactionId: payment.transactionId
                 }
             }
