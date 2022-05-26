@@ -36,6 +36,7 @@ async function run() {
         const toolCollection = client.db("Mr-Computer-Tools").collection("tools");
         const orderCollection = client.db("Mr-Computer-Tools").collection("orders");
         const reviewCollection = client.db("Mr-Computer-Tools").collection("reviews");
+        const blogCollection = client.db("Mr-Computer-Tools").collection("blogs");
 
         // Verify Admin
         const verifyAdmin = async (req, res, next) => {
@@ -212,6 +213,20 @@ async function run() {
         app.get('/review', async (req, res) => {
             const reviews = await reviewCollection.find().toArray();
             res.send(reviews);
+        });
+
+        // insert blog
+        app.post('/blog', verifyJwt, verifyAdmin, async (req, res) => {
+            const blog = req.body;
+            const result = await blogCollection.insertOne(blog);
+            res.send(result);
+        });
+
+        // Get all blog
+        app.get('/blog', async (req, res) => {
+            const blog = req.body;
+            const blogs = await blogCollection.find().toArray();
+            res.send(blogs);
         });
 
     } finally {
